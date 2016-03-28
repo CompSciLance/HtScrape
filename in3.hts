@@ -1,0 +1,11 @@
+string msg = "This data comes from the Wikipedia page for Java Bytecode.";
+string msg2 = "There are a lot of rows in this table,\nso we will grab every fifth one for a total of 10.";
+string filename = "https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings";
+string s = "";
+int i = 5;
+while(i<=55) {
+	getData(s,filename,1,i,1);
+	print(i);
+	print(s);
+	i=i+5;
+}

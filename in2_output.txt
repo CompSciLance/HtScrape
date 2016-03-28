@@ -1,0 +1,22 @@
+java -cp .:HtScrape.jar In2
+
+These were our homework assignments for CS-153
+
+ | 1 | Aug 24 | Sept 2 | Write a Pascal program Input file: widgets.csv
+ | 2 | Sept 9 | Sept 18 | Java scanner Input file: javatest.in
+ | 3 | Sept 16 | Sept 30 | Pascal set expressions and assignments Input files: sets.txt    seterrors.txt Sample output: sets.out    seterrors.out
+ | 4 | Sept 30 | Oct 16 | Pascal set type definitions and set variable declarations Input files: input.txt    errors.txt
+ | 5 | Oct 21 | Oct 30 | Generate a Java scanner with JavaCC Input files: input.txt
+ | 6 | Oct 28 | Nov 6 | Generate a parser with JavaCC
+ | 7 | Nov 9 | Nov 20 | Generate parse trees with JJTree
+
+ | Slides: Goals; compiler as translator; definitions; overview; conceptual designs; parser; scanner; token; front end; intermediate tier; backend; intermediate code; symbol table; code generator; compiler project; grading
+ | Slides: Interpreters; compiler vs. interpreter; key steps for success; Java packages; class relationships; abstract parser and scanner classes; token and source classes; currentChar() vs. nextChar(); messages; Sample Pascal programs: newton.pas  newton.j (Jasmin assembly language object program) hilbert.pas  hilbert2.pas wolfisland.pas   wolfisland.in (Wolf Island input data)
+ | Slides: Initial Pascal-specific parser and scanner; token class; factory classes; initial back end classes; first end-to-end test Pascal tokens; Pascal token classes; syntax diagrams; how to scan for tokens; basic scanning algorithm
+ | Slides: Pascal scanner and token classes: word, string, and number; syntax error handling; Pascal tokenizer; Assignment #2; symbol table conceptual design; symbol table interfaces; symbol table factory class; symbol table and symbol table stack implementation
+ | Slides: Symbol table entries; what to store in each entry; cross-reference listing; statement syntax diagrams; parse tree conceptual design; syntax diagrams: Pascal statements and expressions; parse tree: conceptual design, basic operations, implementation, building; Pascal precedence rules; example expression decomposition; parsing expressions
+ | Slides: Parsing expressions; printing parse trees; temporary hacks; statement and expression executor classes; executing compound statements, assignment statements, and expressions; runtime error handling; Simple Interpreter I; Pascal control statements; statement parser classes; parsing REPEAT and WHILE statements; synchronization and error recovery; Pascal Syntax Checker II
+ | Slides: Assignment #3; parsing FOR, IF, and CASE statements; top-down recursive descent parsing; syntax and semantics; executing REPEAT, WHILE, FOR, and IF statements
+ | Slides: Executing CASE statements; jump tables and jump caches; multipass compilers; parsing declarations; syntax diagrams for Pascal declarations; constant definitions; type definitions: simple, array, and record; variable declarations; declarations and the symbol table; scope and the symbol table stack An article about the FORTRAN compiler for the IBM 1401 computer system. The compiler made 63 passes and ran in 8K of memory; each pass had at most 300 instructions! Assembly language source code of the compiler. Just read the comments for enlightenment.
+ | Slides: Type specification interfaces and attributes; string types; type factory; how identifiers are defined; predefined identifiers and types; BlockParser; DeclarationsParser; ConstantDefinitionsParser; type definition structures
+Thank you for a great class!

@@ -1,0 +1,15 @@
+string filename = "http://www.cs.sjsu.edu/~mak/CS153/index.html";
+string msg = "These were our homework assignments for CS-153";
+string msg2 = "This is the content from the first 10 lectures in CS-153";
+string bye = "Thank you for a great class!";
+int table1 = 3;
+int table2 = 4;
+int row=1;
+int col = 2;
+print(msg);
+printFullTable(filename,table1);
+while (row < 11) {
+	printData(filename,table2, row, col);
+	row=row+1;
+}
+print(bye);

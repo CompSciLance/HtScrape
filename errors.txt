@@ -1,0 +1,22 @@
+int zz = 0;
+int i = 3;
+if(i<0;){
+	i == 0; //should be i = 0
+}
+else {
+	i == 0; //should be i = 0
+}
+i === 2 + 2 + 2 + 2; //no such token, should be =
+i = 2 - 2 //missing semicolon
+i = 2 * 0;
+i = 2 / 1;
+string filename = "newpage.html"; 
+printFullTable(file name, 1); //should be in one word
+
+while (i < 10){
+	print("This is hell."); 
+	printData(filename, 1, i, 2);
+	i+= 1 + 3;
+}
+
+

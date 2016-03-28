@@ -1,0 +1,25 @@
+java -cp .:HtScrape.jar In
+
+2.33
+false
+4
+9
+6.89
+aaload
+I hope this works!
+2
+ | aaload
+3
+ | aastore
+4
+ | aconst_null
+5
+ | aload
+6
+ | aload_0
+7
+ | aload_1
+8
+ | aload_2
+9
+ | aload_3

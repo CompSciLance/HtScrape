@@ -1,0 +1,24 @@
+java -cp .:HtScrape.jar In3
+
+5
+aload
+10
+anewarray
+15
+astore_1
+20
+bastore
+25
+checkcast
+30
+daload
+35
+dconst_1
+40
+dload_2
+45
+dreturn
+50
+dstore_3
+55
+dup2

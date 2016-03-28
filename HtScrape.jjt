@@ -1,0 +1,659 @@
+/**
+ * JJTree template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */
+options
+{
+  IGNORE_CASE=true;
+    JJTREE_OUTPUT_DIRECTORY="src/wci/frontend";
+    NODE_EXTENDS="wci.intermediate.icodeimpl.ICodeNodeImpl";
+    MULTI=true;
+    VISITOR=true;
+    DEBUG_PARSER=true;
+}
+
+PARSER_BEGIN(HtScrape)
+package wci.frontend;
+
+import java.util.ArrayList;
+import java.io.*;
+
+import wci.intermediate.*;
+import wci.intermediate.symtabimpl.*;
+import wci.backend.*;
+import wci.util.*;
+ 
+import static wci.intermediate.symtabimpl.SymTabKeyImpl.*;
+import static wci.intermediate.symtabimpl.DefinitionImpl.*;
+import static wci.intermediate.symtabimpl.RoutineCodeImpl.*;
+import static wci.intermediate.symtabimpl.SymTabKeyImpl.*;
+import static wci.intermediate.icodeimpl.ICodeKeyImpl.*;
+
+public class HtScrape
+{
+    private static final String SOURCE_SUFFIX = ".hts";
+    private static final String OUTPUT_SUFFIX = ".j";
+
+    private static SymTabStack symTabStack;
+    private static SymTabEntry programId;
+
+    private static ArrayList<SymTabEntry> variableList = new ArrayList<SymTabEntry>();
+    private static int variableIndex = 0;
+    
+  public static void main(String args [])
+  	throws Exception
+  {
+    	// Create and initialize the symbol table stack.
+        symTabStack = SymTabFactory.createSymTabStack();
+        Predefined.initialize(symTabStack);
+
+// Process the source file path which ends in .hts
+        // and create the output file path which ends in .j
+        String sourceFilePath = args[0];
+        int truncatedLength = sourceFilePath.length() - SOURCE_SUFFIX.length();
+        int suffixIndex = sourceFilePath.lastIndexOf(SOURCE_SUFFIX);
+        String objectFilePath = (suffixIndex == truncatedLength)
+            ? sourceFilePath.substring(0, truncatedLength) + OUTPUT_SUFFIX
+            : sourceFilePath + OUTPUT_SUFFIX;
+
+        // Parse a HtScrape program.
+        Reader    reader = new FileReader(sourceFilePath);
+        HtScrape parser = new HtScrape(reader);
+        SimpleNode rootNode = parser.Program();
+
+    	// Print the cross-reference table
+   	 	CrossReferencer crossReferencer = new CrossReferencer();
+    	crossReferencer.print(symTabStack);
+
+        // Visit the parse tree nodes to decorate them with type information.
+        TypeSetterVisitor typeVisitor = new TypeSetterVisitor();
+        rootNode.jjtAccept(typeVisitor, null);
+
+        // Create and initialize the ICode wrapper for the parse tree.
+        ICode iCode = ICodeFactory.createICode();
+        iCode.setRoot(rootNode);
+        programId.setAttribute(ROUTINE_ICODE, iCode);
+        
+    	// Print the parse tree
+    	ParseTreePrinter treePrinter = new ParseTreePrinter(System.out);
+    	treePrinter.print(symTabStack);
+
+   		 // Create the compiler backend and generate code.
+        Backend backend = BackendFactory.createBackend("compile");
+        backend.process(iCode, symTabStack, objectFilePath);
+  }
+}
+
+PARSER_END(HtScrape)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+| < "//" (~[ "\n", "\r" ])*
+    (
+      "\n"
+    | "\r"
+    | "\r\n"
+    ) >
+| < "/*" (~[ "*" ])* "*"
+    (
+      ~[ "/" ] (~[ "*" ])* "*"
+    )*
+    "/" >
+}
+
+
+TOKEN: /*HtScrape Tokens */
+{
+  	<STRING_LITERAL:"\"" (~["\n","\r","\""])* ("\""|"\n"|"\r"|"\r\n")>
+  	{ debugStream.println("STRING_LITERAL token: " + matchedToken.image); }
+ 	| 
+    <CHARACTER:
+    "'"(["a"-"z", "A"-"Z", "_"]|"\\"|["0"-"9"])"'"
+    >  { debugStream.println("CHARACTER token: " + matchedToken.image); }
+    |
+    < INTEGER: ["1"-"9"](["0"-"9"])* | "0"(["0"-"7"])* | ("0x"|"0X")(["0"-"9"]|["a"-"z", "A"-"Z"])+ > 
+	{ debugStream.println("INTEGER token: " + matchedToken.image); }
+  	| 
+    < NUMBER:
+    (["0"-"9"])+ "." (["0"-"9"])*(["E","e"] (["+","-"])? (["0"-"9"])+)? |
+	(["0"-"9"])+ (".")? (["0"-"9"])* ["E","e"] (["+","-"])? (["0"-"9"])+ |
+	(["0"-"9"])* "." (["0"-"9"])+ (["E","e"] (["+","-"])? (["0"-"9"])+)? |
+	(["0"-"9"])* (".")? (["0"-"9"])+ ["E","e"] (["+","-"])? (["0"-"9"])+
+    >
+   	{ debugStream.println("NUMBER token: " + matchedToken.image); }
+  	| //reserved words
+    <IF: "if" >
+    { debugStream.println("IF token: " + matchedToken.image); }
+    |
+    <ELSE: "else" >
+    { debugStream.println("ELSE token: " + matchedToken.image); }
+    |
+    < THEN: "then" >
+    { debugStream.println("THEN token: " + matchedToken.image); }
+    |
+    < WHILE: "while" >
+    { debugStream.println("WHILE token: " + matchedToken.image); }
+  	| 
+    <EXIT: "exit" >
+    { debugStream.println("EXIT token: " + matchedToken.image); }
+    |
+    < THROW: "throw" >
+    { debugStream.println("THROW token: " + matchedToken.image); }
+    | 
+    < BREAK: "break" >
+    { debugStream.println("BREAK token: " + matchedToken.image); }
+    |
+    < VOID: "void" >
+    { debugStream.println("VOID token: " + matchedToken.image); }
+    |
+    < RETURN: "return" >
+    { debugStream.println("RETURN token: " + matchedToken.image); }
+    |
+	< FUNC: "func" >
+	{ debugStream.println("FUNC token: " + matchedToken.image); }
+	| 
+    < INT: "int" >
+    { debugStream.println("INT token: " + matchedToken.image); }
+    |
+    < NUM: "num" >
+    { debugStream.println("INT token: " + matchedToken.image); }
+    |
+  	< STRING: "string">
+  	{ debugStream.println("STRING token: " + matchedToken.image); }
+ 	| 
+    < TRUE: "true" >
+    { debugStream.println("TRUE token: " + matchedToken.image); }
+    |
+    < FALSE: "false" >
+    { debugStream.println("FALSE token: " + matchedToken.image); }
+    | 
+    < TRY: "try" >
+    { debugStream.println("TRY token: " + matchedToken.image); }
+    |
+    < CATCH: "catch" >
+    { debugStream.println("CATCH token: " + matchedToken.image); }
+    |
+    < FOR: "for" >
+    { debugStream.println("FOR token: " + matchedToken.image); }
+    |
+    < NULL: "null" >
+    { debugStream.println("NULL token: " + matchedToken.image); }
+    |
+    < GET: "get" >
+    { debugStream.println("GET token: " + matchedToken.image); }
+    |
+    < PRINT: "print" >
+    { debugStream.println("PRINT token: " + matchedToken.image); }
+    |
+ 	< PRINT_FULL_TABLE: "printFullTable" >
+ 	{ debugStream.println("PRINT_FULL_TABLE token: " + matchedToken.image); }
+	|
+ 	< PRINT_DATA: "printData" >
+ 	{ debugStream.println("PRINT_DATA token: " + matchedToken.image); }
+	|
+	< GET_DATA: "getData" >
+ 	{ debugStream.println("GET_DATA token: " + matchedToken.image); }
+	| 
+    <IDENTIFIER: (["a"-"z", "A"-"Z"])(["a"-"z", "A"-"Z", "0"-"9","_", "-"])* >  
+   	{ debugStream.println("IDENTIFIER token: " + matchedToken.image); }
+    |
+	// SPECIAL SYMBOLS
+    < LEFT_PAREN: "(" >
+    { debugStream.println("LEFT_PAREN token: " + matchedToken.image); }
+  	|
+  	< RIGHT_PAREN: ")" >
+  	{ debugStream.println("RIGHT_PAREN token: " + matchedToken.image); }
+ 	|
+ 	< LEFT_CURLY: "{" >
+	{ debugStream.println("LEFT_CURLY token: " + matchedToken.image); }
+	| 
+ 	< RIGHT_CURLY: "}" >
+	{ debugStream.println("RIGHT_CURLY token: " + matchedToken.image); }
+	| 
+	< PLUS: "+" >
+ 	{ debugStream.println("PLUS token: " + matchedToken.image); }
+	|
+	< MINUS: "-" >
+ 	{ debugStream.println("MINUS token: " + matchedToken.image); }
+	|
+	< MULTIPLY: "*" >
+ 	{ debugStream.println("MULTIPLY token: " + matchedToken.image); }
+	|
+	< DIVIDE: "/" >
+ 	{ debugStream.println("DIVIDE token: " + matchedToken.image); }
+	|
+ 	< EQUALS: "=" >
+ 	{ debugStream.println("EQUALS token: " + matchedToken.image); }
+	|
+	< LESS_THAN: "<" >
+	{ debugStream.println("LESS_THAN token: " + matchedToken.image); }
+	|
+	< GREATER_THAN: ">" >
+	{ debugStream.println("GREATER_THAN token: " + matchedToken.image); }
+	|
+	< BANG: "!" >
+	{ debugStream.println("BANG token: " + matchedToken.image); }
+	|
+	< COMMA: "," >
+	{ debugStream.println("COMMA token: " + matchedToken.image); }
+	|
+	< PERIOD: "." >
+	{ debugStream.println("PERIOD token: " + matchedToken.image); }
+	|
+	< SEMICOLON: ";" >
+	{ debugStream.println("SEMICOLON token: " + matchedToken.image); }
+	|
+	< AT_SIGN: "@" >
+	{ debugStream.println("AT_SIGN token: " + matchedToken.image); }
+	|
+	< POUND_SIGN: "#" >
+	{ debugStream.println("POUND_SIGN token: " + matchedToken.image); }
+	|
+	< #LETTER : [ "_", "a"-"z", "A"-"Z" ] >
+	|
+	< #DIGIT : [ "0"-"9" ] >
+| <LESS_EQUAL : "<=">{ debugStream.println("LESS_EQUAL token: " + matchedToken.image); }
+| <GREATER_EQUAL : ">=">{ debugStream.println("GREATER_EQUAL token: " + matchedToken.image); }
+| <DOUBLE_EQUAL : "=="> { debugStream.println("DOUBLE_EQUAL token: " + matchedToken.image); }
+| <NOT_EQUAL : "!="> { debugStream.println("NOT_EQUAL token: " + matchedToken.image); }
+| <PLUS_PLUS : "++" > { debugStream.println("PLUS_PLUS token: " + matchedToken.image); }
+| <PLUS_EQUAL : "+=" > { debugStream.println("PLUS_EQUAL token: " + matchedToken.image); }
+| <MINUS_EQUAL : "-=" > { debugStream.println("MINUS_EQUAL token: " + matchedToken.image); }
+| <MULTIPLY_EQUAL : "*=" > { debugStream.println("MULTIPLY_EQUAL token: " + matchedToken.image); }
+| <DIVIDE_EQUAL : "/=" > { debugStream.println("DIVIDE_EQUAL token: " + matchedToken.image); }
+}
+
+	//production rules
+	SimpleNode Program(): {SimpleNode rootNode;}
+	{
+	  {
+	    programId = symTabStack.enterLocal("Prorgam");
+        programId.setDefinition(DefinitionImpl.PROGRAM);
+        programId.setAttribute(ROUTINE_SYMTAB, symTabStack.push());
+        symTabStack.setProgramId(programId);
+	  }
+	   try {
+        rootNode = Statement()
+        <EOF> {
+          System.out.println("\n** Successfully parsed an entire Program!\n");
+           return rootNode;
+        }
+    }
+    catch (ParseException ex) {
+        handleError(ex);
+        return null;
+    }
+	  	
+} 
+	
+	SimpleNode Statement() : {}
+	{
+	  (
+	    IntDeclaration() |
+	    NumberDeclaration() |
+	    StringDeclaration() |
+	    lookahead()|
+	    PrintStatement() |
+	    PrintFullTableStatement()|
+	    PrintDataStatement() |
+	    GetDataStatement() |
+	    IfStatement()|
+	    WhileStatement()
+	  )*
+	  {
+	    return jjtThis;
+	  }
+	  
+	}
+
+	void variable() : {}
+{
+    <IDENTIFIER> {
+        SymTabEntry variableId = symTabStack.lookup(token.image);
+        variableId.appendLineNumber(token.beginLine);
+        TypeSpec type = variableId.getTypeSpec();
+        jjtThis.setTypeSpec(type);
+        jjtThis.setAttribute(ID, variableId);
+    }
+}
+
+	void newVariable(TypeSpec type) : {}
+	{
+		<IDENTIFIER>
+		 {
+		   SymTabEntry variableId = processVariableDecl(token, variableIndex++, variableList, type);
+         jjtThis.setTypeSpec(type);
+         jjtThis.setAttribute(ID, variableId);
+         programId.setAttribute(ROUTINE_LOCALS_COUNT, variableIndex);
+		 }
+	}
+
+	void IntDeclaration(): {}
+	{
+	  < INT >
+	  {
+          SymTabEntry typeId = symTabStack.lookup(token.image);
+          typeId.appendLineNumber(token.beginLine);
+          TypeSpec type = typeId.getTypeSpec(); 
+	  }
+	  newVariable(type)
+	  < EQUALS >
+      integerConstant()
+	  < SEMICOLON >
+	  {
+	    System.out.println("Successfully parsed an Int Declaration!\n");
+	  }
+	}
+
+	void NumberDeclaration(): {}
+	{
+	  < NUM >
+	  {
+          SymTabEntry typeId = symTabStack.lookup(token.image);
+          typeId.appendLineNumber(token.beginLine);
+          TypeSpec type = typeId.getTypeSpec(); 
+	  }
+	  newVariable(type)
+	  < EQUALS >
+      numberConstant()
+	  < SEMICOLON >
+	  {
+	    System.out.println("Successfully parsed a Number Declaration!\n");
+	  }
+	}
+
+	void ArithmeticStatement() : {}
+	{
+	  variable()
+	  (< PLUS_EQUAL >|< MINUS_EQUAL >|< MULTIPLY_EQUAL >|< DIVIDE_EQUAL >)
+	  Operator()
+	  < SEMICOLON >
+	  {
+	    System.out.println("Successfully parsed an Arithmetic Statement!\n");
+	  }
+	}
+	void lookahead() : {}
+	{
+	  (LOOKAHEAD(ArithmeticStatement())
+	 	ArithmeticStatement()
+		|
+	 	lookahead2()
+	 	) 	
+	}
+	void lookahead2() : {}
+	{
+	  (LOOKAHEAD(SimpleAssignment())
+	  SimpleAssignment()
+		|
+	  ComplexAssignment()
+	)
+	}
+	void SimpleAssignment() : {}
+	{
+	  variable()
+	  < EQUALS >
+	  (
+	    integerConstant()
+	  |
+	  	stringConstant()
+	  )
+	  < SEMICOLON >
+	  { System.out.println("Successfully parsed a Simple Assignment!\n"); }
+	}
+
+	void ComplexAssignment() :{}
+	{
+	  variable()
+	  < EQUALS >
+	  Expression()
+	  < SEMICOLON >
+	  { System.out.println("Successfully parsed a Complex Assignment!\n"); }
+	}
+	
+	void StringDeclaration() : {}
+	{
+	  < STRING >
+	  {
+        SymTabEntry typeId = symTabStack.lookup(token.image);
+        typeId.appendLineNumber(token.beginLine);
+        TypeSpec type = typeId.getTypeSpec(); 
+	  }
+	  newVariable(type)
+	  < EQUALS >
+	  stringConstant() 
+	  < SEMICOLON >
+	  { System.out.println("Successfully parsed a String Declaration!\n"); }
+	}
+
+	
+	
+	void MultipleParams() : {}
+	{
+	  (variable()|integerConstant()|numberConstant()|stringConstant())
+	  (
+	    < COMMA >
+	    (
+	      variable()|integerConstant()|numberConstant()|stringConstant())
+	  )*
+	  { System.out.println("Successfully parsed multiple parameters!\n"); }
+	}
+
+	void PrintStatement() : {}
+	{
+	  < PRINT >
+	  < LEFT_PAREN >
+	  variable()
+	  < RIGHT_PAREN >
+	  < SEMICOLON >
+	  { System.out.println("Successfully parsed a Print Statement!\n"); }
+	}
+
+	void PrintFullTableStatement() : {}
+	{
+	  < PRINT_FULL_TABLE >
+	  < LEFT_PAREN >
+	 	MultipleParams()
+	  < RIGHT_PAREN >
+	  < SEMICOLON >
+	  { System.out.println("Successfully parsed a PrintFullStatement Statement!\n"); }
+	}
+
+	void PrintDataStatement() : {}
+	{
+	  < PRINT_DATA >
+	  < LEFT_PAREN >
+	  MultipleParams()
+	  < RIGHT_PAREN >
+	  < SEMICOLON >
+	  { System.out.println("Successfully parsed a PrintData Statement!\n"); }
+	}
+
+	void GetDataStatement() : {}
+	{
+	  < GET_DATA >
+	  < LEFT_PAREN >
+	  MultipleParams()
+	  < RIGHT_PAREN >
+	  < SEMICOLON >
+	  { System.out.println("Successfully parsed a GetData Statement!\n"); }
+	}
+
+    void IfStatement() : {}
+    {
+    try {
+  		<IF><LEFT_PAREN>Expression()<RIGHT_PAREN>
+  		<LEFT_CURLY >
+  			Statement()
+  		<RIGHT_CURLY >
+  		[ ElseStatement()]
+                }
+                catch(ParseException ex){handleLoopError(ex);}
+    	{ System.out.println("Successfully parsed an if statement!\n"); }
+	}
+	void ElseStatement() : {}
+	{
+		< ELSE >
+  		< LEFT_CURLY >
+  			Statement()
+  		< RIGHT_CURLY >
+  		{
+	    	System.out.println("Successfully parsed an ELSE Statement!\n");
+	  	}
+	}
+	void WhileStatement() : {}
+	{
+        try {
+	  < WHILE >
+	  < LEFT_PAREN >
+	  Expression()
+	  < RIGHT_PAREN >
+	  <LEFT_CURLY >
+  	   	Statement()
+  		<RIGHT_CURLY >
+                }
+                catch(ParseException ex){handleLoopError(ex);}
+    	{ System.out.println("Successfully parsed an if statement!\n"); }
+	}
+	void Expression() : {} 
+	{
+  		{System.out.println("\nEXPRESSION STARTS");}
+  		Operator()
+  		{System.out.println("EXPRESSION ENDS\n");}
+	}
+
+	void Operator() : {} 
+	{
+  		Operand()
+  		[
+  		(
+  		  (
+  		    expr_operator()
+  			Operand()
+  			)
+  		|
+  		  (
+  		    arith_operator()
+  		    Operand()
+  		  )+
+  		)
+  		]
+	}
+	
+	void Operand() : {Token t;} 
+	{
+	  	variable() 
+ 		|  integerConstant() | numberConstant() | stringConstant()
+ 		  {
+ 		    jjtThis.setAttribute(ID, token);
+ 		    //System.out.println("Operand: " + t.image);
+ 		  }
+	}
+
+	void expr_operator() :{Token t;	}
+	{
+	  {System.out.println("Operator:");}
+	  (< GREATER_THAN >|< LESS_THAN >|< LESS_EQUAL >|< GREATER_EQUAL >|< DOUBLE_EQUAL >|< NOT_EQUAL >)
+	  {
+	    jjtThis.setAttribute(ID, token);
+	  }
+	}
+
+	void arith_operator() :{Token t;}
+	{
+	  {System.out.println("Operator:");}
+	  (< PLUS >|< MINUS >|< MULTIPLY >|< DIVIDE >)
+	  {
+	    jjtThis.setAttribute(ID, token);
+	  }
+	}
+	
+	void integerConstant() : {}
+	{
+    <INTEGER> {
+        jjtThis.setTypeSpec(Predefined.integerType);
+        jjtThis.setAttribute(VALUE, Integer.parseInt(token.image));
+    	}
+	}
+
+	void numberConstant() : {}
+	{
+    <NUMBER> {
+        jjtThis.setTypeSpec(Predefined.realType);
+        jjtThis.setAttribute(VALUE, Float.parseFloat(token.image));
+    	}
+	}
+
+	void stringConstant() : {}
+	{
+    <STRING_LITERAL> {
+        jjtThis.setTypeSpec(Predefined.stringType);
+        jjtThis.setAttribute(VALUE, String.valueOf(token.image));
+    	}
+	}
+//Handles errors when parsing
+/*JAVACODE 
+public String errorHandler(ParseException exception) 
+{
+    Token token = exception.currentToken;
+    System.out.println(ex.getMessage());
+    do {token = getNextToken();} 
+    while (token.kind != SEMICOLON);
+    jjtThis.popNode();
+    return token.image;
+}*/
+JAVACODE
+SymTabEntry processVariableDecl(Token token, int index,
+             ArrayList<SymTabEntry> variableList, TypeSpec type) #void
+{
+    SymTabEntry variableId = symTabStack.enterLocal(token.image);
+    variableId.setIndex(index);
+    variableId.setDefinition(DefinitionImpl.VARIABLE);
+    variableId.appendLineNumber(token.beginLine);
+    variableId.setTypeSpec(type);
+    variableList.add(variableId);
+    return variableId;
+}
+
+JAVACODE
+String handleError(ParseException ex) #void
+{
+    Token token = ex.currentToken;
+    System.out.println(ex.getMessage());
+
+    do {
+    	token = getNextToken();
+    } while (token.kind != SEMICOLON);
+
+	jjtree.popNode();
+    return token.image;
+}
+
+JAVACODE
+String handleLoopError(ParseException ex) #void
+{
+    Token token = ex.currentToken;
+    System.out.println(ex.getMessage());
+    
+    boolean popNow = false;
+    Token temp; 
+    while(token.kind != RIGHT_CURLY || popNow == false)
+    {
+        if(token.kind == RIGHT_CURLY)
+        {
+            temp = token;
+            token = getNextToken();
+            if(token.kind != ELSE)
+            {
+                token = temp;
+                popNow = true;
+                break;
+            }
+        }
+        else{token = getNextToken();}
+    }
+        jjtree.popNode();
+    return token.image;
+}
